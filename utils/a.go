@@ -6,31 +6,33 @@ import(
 	"os"
 )
 
-func encodeArrayIntoFile(filename string, array *[]int) {
+func EncodeArrayIntoFile(filename string, array *[]int) error {
 	f, err := os.Create(filename)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	w := bufio.NewWriter(f)
 	enc := gob.NewEncoder(w);
 	
 	err = enc.Encode(*array)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	w.Flush()
+	return nil
 }
 
-func decodeFileIntoArray(filename string, array *[]int) {
+func DecodeFileIntoArray(filename string, array *[]int) error {
 	f, err := os.Open(filename)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	r := bufio.NewReader(f)
 	dec := gob.NewDecoder(r);
 	
 	err = dec.Decode(array)
 	if err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
