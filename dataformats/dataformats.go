@@ -8,7 +8,7 @@ import(
 
 //
 func Format1(line []byte) (chrIndex1, pos1, chrIndex2, pos2, inc int64){
-	splt := bytes.Split(line,[]byte(" "))
+	splt := bytes.Split(line,[]byte("\t")) //Copying converts tabs to spaces, watch out
 	rsplt := make([][]byte,7)
 	rindex := 0
 	//Rebuild splt array, skipping empty slices
