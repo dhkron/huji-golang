@@ -23,6 +23,7 @@ func main() {
 	segmentP := flag.Int64("segment", 100000, "Segment size")
 	inputFilenameP := flag.String("input","","Input file path to be serialized, preferably in /raw directory")
 	inputFormatP := flag.String("format","","Format of data")
+	chrSizesP := flag.String("chrsize","","Path of chromosome sizes")
 	flag.Parse()
 
 	if *inputFilenameP == "" {
@@ -33,18 +34,27 @@ func main() {
 		fmt.Println("Format please. Guessing could be hazardous.")
 		return
 	}
+	if *chrSizesP == "" {
+		fmt.Println("Hmm could you add a chromosome sizes file?")
+		return
+	}
 	inputFilename := *inputFilenameP
-	outputFilename := getOutputname(*inputFilenameP);
-	inputFormat :=  *inputFormatP
+	outputFilename := getOutputname(*inputFilenameP)
+	dataFormat :=  *inputFormatP
+	chrSizesFile := *chrSizesP
 	segment := *segmentP
 	//Print some stuff
-	fmt.Printf("Parsing file %s\r\nFormat %s\r\nSegment size %d\r\nOutput file %s\r\n", inputFilename, inputFormat, segment, outputFilename)
+	fmt.Printf("Input file\t%s\r\n",inputFilename)
+	fmt.Printf("Output file\t%s\r\n",outputFilename)
+	fmt.Printf("Data Format\t%s\r\n",dataFormat)
+	fmt.Printf("Segment size\t%d\r\n",segment)
+	fmt.Printf("Chromosizes\t%s\r\n",chrSizesFile)
 
 	//Load sizes
-	chrPos, sum := utils.GetChrPos("chrom.sizes.hg19.txt")
+	chrPos, chrLen := utils.GetChrPosAndLens(chrSizesFile)
 
 	//Calculate dimensions
-	sum = sum /segment
+	sum := (chrPos[23]+chrLen[23])/segment + 1 //+1 For half segment. I could do explicit calc, but must of times it's ok
 	fmt.Printf("Total dim: %v\n",sum)
 	fmt.Printf("Total Pixels: %v\n",sum*sum)
 
@@ -62,15 +72,30 @@ func main() {
 	var realIndex int64
 	var linecount int64 = 0
 	//Go!
+	var myFmt dataformats.DataFormatter
+	switch dataFormat {
+	case "1":
+		myFmt = dataformats.Format1{}
+	case "2":
+		myFmt = dataformats.Format2{}
+	default:
+		panic("Unidentified data format! Exiting before running over this huge file!!!")
+	}
 	f, _ := os.Open(inputFilename)
 	scanner := bufio.NewScanner(f)
 	t0 := time.Now()
 	for scanner.Scan() {
-		chrIndex1, pos1, chrIndex2, pos2, inc = dataformats.Format1(scanner.Bytes())
-		realPos1 = chrPos[chrIndex1]+pos1 //Danger!!! chrIndex=0 or 24 will return -1!!!!!
-		realPos2 = chrPos[chrIndex2]+pos2
-		if chrIndex1 > 0 && chrIndex1<24 { //1 to X
+		chrIndex1, pos1, chrIndex2, pos2, inc = myFmt.Format(scanner.Bytes())
+		if chrPos[chrIndex1] != -1 && chrPos[chrIndex2] != -1 { //Check if we are in valid chromosomes
+			realPos1 = chrPos[chrIndex1]+pos1
+			realPos2 = chrPos[chrIndex2]+pos2
 			realIndex = (realPos1 / segment) + dim*(realPos2 / segment)
+			if realIndex >= int64(len(s)) {
+				fmt.Printf("%s ~~~ out of range!!!\r\n",scanner.Bytes())
+				fmt.Printf("%d %d %d %d %d\r\n", chrIndex1, pos1, chrIndex2, pos2, inc)
+				fmt.Printf("%d\r\n",realIndex)
+				panic("Panicking because I am afraid of index out of range")
+			}
 			s[realIndex] = s[realIndex] + int(inc)
 		}
 		linecount+=1
