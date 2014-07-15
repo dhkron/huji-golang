@@ -50,3 +50,18 @@ func (Format2) Format(line []byte) (chrIndex1, pos1, chrIndex2, pos2, inc int64)
 	inc = 1
 	return
 }
+
+type Format3 struct {}
+//chrms1,chrms2,cuts1,cuts2,strands1,strands2
+//chr1 is 0, chr23 is 22. No M/X/Y are present
+func (Format3) Format(line []byte) (chrIndex1, pos1, chrIndex2, pos2, inc int64){
+	splt := bytes.Split(line,[]byte(","))
+	chrIndex1,_ = utils.Chr2Int(splt[0])
+	chrIndex1++
+	pos1,_ = strconv.ParseInt(string(splt[2]),10,64)
+	chrIndex2,_ = utils.Chr2Int(splt[1])
+	chrIndex2++
+	pos2,_ = strconv.ParseInt(string(splt[3]),10,64)
+	inc = 1
+	return
+}

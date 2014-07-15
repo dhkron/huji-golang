@@ -78,6 +78,8 @@ func main() {
 		myFmt = dataformats.Format1{}
 	case "2":
 		myFmt = dataformats.Format2{}
+	case "3":
+		myFmt = dataformats.Format3{}
 	default:
 		panic("Unidentified data format! Exiting before running over this huge file!!!")
 	}
