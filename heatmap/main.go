@@ -43,7 +43,8 @@ func main() {
 	chrSizesFileP := flag.String("chrsize","","Path of chromosome sizes")
 	segmentSizeP := flag.Int("segment",100000,"Segment size")
 	magicNumberP := flag.Int("magic",1,"Magic number")
-	thersholdP :=  flag.Int("ther",100,"Magic number")
+	thersholdP := flag.Int("ther",100,"Magic number")
+	normalizeP := flag.Float64("norm",0,"Power law normalization")
 	flag.Parse()
 
 	chrPos, chrLen := utils.GetChrPosAndLens(*chrSizesFileP)
@@ -65,6 +66,22 @@ func main() {
 	domain2pos := int(chrPos[*targetChr2P]/segment)
 	domain1len := int(chrLen[*targetChr1P]/segment)
 	domain2len := int(chrLen[*targetChr2P]/segment)
+
+	if *targetChr1P == *targetChr2P && *normalizeP>0 {
+		for x:=domain1pos; x<domain1pos+domain1len; x++ {
+			for y:=domain2pos; y<domain2pos+domain2len; y++{
+				key := x + y*dim
+				dist := x-y
+				if dist<0 {
+					dist = -dist
+				}
+				if dist == 0 {
+					dist = 1
+				}
+				a[key] = a[key]*int(math.Pow(float64(dist),*normalizeP))
+			}
+		}
+	}
 
 	min := 0
 	max := int(math.Inf(1))
